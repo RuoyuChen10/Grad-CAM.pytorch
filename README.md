@@ -147,6 +147,19 @@ git clone https://github.com/facebookresearch/detectron2.git
 b) 修改`detectron2/modeling/roi_heads/fast_rcnn.py`文件中的`fast_rcnn_inference_single_image`函数，主要是增加索引号，记录分值高的预测边框是由第几个proposal边框生成的；修改后的`fast_rcnn_inference_single_image`函数如下：
 
 ```python
+import logging
+from typing import Dict, List, Tuple, Union
+import torch
+from fvcore.nn import giou_loss, smooth_l1_loss
+from torch import nn
+from torch.nn import functional as F
+
+from detectron2.config import configurable
+from detectron2.layers import Linear, ShapeSpec, batched_nms, cat, nonzero_tuple
+from detectron2.modeling.box_regression import Box2BoxTransform
+from detectron2.structures import Boxes, Instances
+from detectron2.utils.events import get_event_storage
+
 def fast_rcnn_inference_single_image(
         boxes, scores, image_shape, score_thresh, nms_thresh, topk_per_image
 ):
